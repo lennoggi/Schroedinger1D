@@ -4,12 +4,12 @@
 #include <cmath>
 
 // ***** DON'T TOUCH *****
-constexpr inline int GAUSSIAN = 0;
-constexpr inline int BOX      = 1;
+#define GAUSSIAN 0
+#define BOX      1
 // ***********************
 
 // Wave function type
-constexpr inline int WF = GAUSSIAN;
+#define WF BOX
 
 // Reduced Planck constant
 constexpr inline double HBAR = 1.;
