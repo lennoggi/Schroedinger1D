@@ -1,6 +1,7 @@
 #include <cassert>
 #include <array>
 #include <complex>
+#include <iostream>
 
 #include <hdf5.h>
 
@@ -15,16 +16,34 @@ using namespace std::complex_literals;
 
 
 int main() {
+    // Print some info
+    #if (WF == GAUSSIAN)
+    cout << "Gaussian wave function" << endl
+         << "Center:    " << X0      << endl
+         << "Sigma:     " << SIGMA   << endl
+         << "Momentum:  " << P0      << endl
+         << endl;
+    #elif (WF == BOX)
+    cout << "Box wave function"    << endl
+         << "Center:    " << X0    << endl
+         << "Width:     " << SIGMA << endl
+         << "Momentum:  " << P0    << endl
+         << endl;
+    #else
+    #error "Invalid wave function"
+    #endif
+
+
+    // Build the wave function
     constexpr double nhalf = static_cast<double>(N)/2.;
-    //constexpr double lhalf = L/2.;  // XXX: remove
     constexpr double dx    = L/static_cast<double>(N); 
 
     array<double, N> js, x;
     array<complex<double>, N> wf;
 
     for (auto j = decltype(N){0}; j < N; ++j) {
-        js[j] = j; //    - nhalf;  // XXX: remove
-         x[j] = j*dx; // - lhalf;  // NOTE: only used for output
+        js[j] = j;
+         x[j] = j*dx;  // NOTE: only used for output
 
         #if (WF == GAUSSIAN)
         wf[j] = gaussian_wf(x[j]);
@@ -194,6 +213,8 @@ int main() {
     assert(H5Gclose(    iFwf_group_id) >= 0);
 
     assert(H5Fclose(file_id) >= 0);
+
+    cout << "Data written to '" << FILENAME << "'" << endl;
 
     return 0;
 }

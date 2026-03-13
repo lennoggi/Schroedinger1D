@@ -1,3 +1,6 @@
+# DFT
+This code computes the discrete Fourier transform (DFT) of a wave function and inverts it to get the original wave function back.
+
 ## Minimal requirements
 - A C++ compiler supporting the `C++17` standard
 - The HDF5 library
