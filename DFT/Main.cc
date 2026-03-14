@@ -38,11 +38,11 @@ int main() {
     constexpr double nhalf = static_cast<double>(N)/2.;
     constexpr double dx    = L/static_cast<double>(N); 
 
-    array<double, N> js, x;
+    array<double, N> jj, x;
     array<complex<double>, N> wf;
 
     for (auto j = decltype(N){0}; j < N; ++j) {
-        js[j] = j;
+        jj[j] = static_cast<double>(j);
          x[j] = j*dx;  // NOTE: only used for output
 
         #if (WF == GAUSSIAN)
@@ -66,12 +66,12 @@ int main() {
     array<complex<double>, N> Fwf, Fwf_exact;
 
     for (auto k = decltype(N){0}; k < N; ++k) {
-        ks[k]  = k - nhalf;
+        ks[k]  = static_cast<double>(k) - nhalf;
          p[k]  = ks[k]*dp;  // NOTE: only used for output
         Fwf[k] = 0.;
 
         for (auto j = decltype(N){0}; j < N; ++j) {
-            Fwf[k] += exp(-cexpfac*js[j]*ks[k])*wf[j];
+            Fwf[k] += exp(-cexpfac*jj[j]*ks[k])*wf[j];
         }
 
         Fwf[k] *= Fwf_norm;
@@ -96,7 +96,7 @@ int main() {
         iFwf[j] = 0.;
 
         for (auto k = decltype(N){0}; k < N; ++k) {
-            iFwf[j] += exp(cexpfac*js[j]*ks[k])*Fwf[k];
+            iFwf[j] += exp(cexpfac*jj[j]*ks[k])*Fwf[k];
         }
 
         iFwf[j] *= iFwf_norm;
