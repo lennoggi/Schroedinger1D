@@ -35,9 +35,7 @@ int main() {
 
 
     // Build the wave function
-    constexpr double nhalf = static_cast<double>(N)/2.;
-    constexpr double dx    = L/static_cast<double>(N); 
-
+    constexpr double dx = L/static_cast<double>(N);
     array<double, N> jj, x;
     array<complex<double>, N> wf;
 
@@ -58,6 +56,7 @@ int main() {
     /* ---------------------------------------------------------
      * Build the discrete Fourier transform of the wave function
      * --------------------------------------------------------- */
+    constexpr double      nhalf    = static_cast<double>(N)/2.;
     const complex<double> cexpfac  = 2.i*M_PI/static_cast<double>(N);
     constexpr double      Fwf_norm = dx/sqrt(2.*M_PI*HBAR);
     constexpr double      dp       = 2.*M_PI*HBAR/L; 
