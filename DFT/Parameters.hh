@@ -15,7 +15,7 @@
 constexpr inline double HBAR = 1.;
 
 // Number of spatial grid points
-constexpr inline int N = 1000;
+constexpr inline size_t N = 1000;
 
 // Spatial bounds are [0, L - L/N]
 constexpr inline double L = 1.;
