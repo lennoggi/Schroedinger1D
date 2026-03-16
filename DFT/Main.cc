@@ -57,17 +57,16 @@ int main() {
      * Build the discrete Fourier transform of the wave function
      * --------------------------------------------------------- */
     constexpr double      nhalf    = static_cast<double>(N)/2.;
-    const complex<double> cexpfac  = 2.i*M_PI/static_cast<double>(N);
+    const complex<double> cexpfac  = 2.0i*M_PI/static_cast<double>(N);
     constexpr double      Fwf_norm = dx/sqrt(2.*M_PI*HBAR);
     constexpr double      dp       = 2.*M_PI*HBAR/L; 
 
     array<double, N> ks, p;
-    array<complex<double>, N> Fwf, Fwf_exact;
+    array<complex<double>, N> Fwf{0.}, Fwf_exact;
 
     for (auto k = decltype(N){0}; k < N; ++k) {
         ks[k]  = static_cast<double>(k) - nhalf;
          p[k]  = ks[k]*dp;  // NOTE: only used for output
-        Fwf[k] = 0.;
 
         for (auto j = decltype(N){0}; j < N; ++j) {
             Fwf[k] += exp(-cexpfac*jj[j]*ks[k])*wf[j];
@@ -89,11 +88,9 @@ int main() {
      * Build the inverse discrete Fourier transform of the wave function
      * ----------------------------------------------------------------- */
     constexpr double iFwf_norm = sqrt(2.*M_PI*HBAR)/L;
-    array<complex<double>, N> iFwf;
+    array<complex<double>, N> iFwf{0.};
 
     for (auto j = decltype(N){0}; j < N; ++j) {
-        iFwf[j] = 0.;
-
         for (auto k = decltype(N){0}; k < N; ++k) {
             iFwf[j] += exp(cexpfac*jj[j]*ks[k])*Fwf[k];
         }
@@ -172,11 +169,12 @@ int main() {
     const auto memspace_id    = H5Screate_simple(1, &memdims, nullptr);
     assert(memspace_id >= 0);
 
-              hsize_t start  = 0;  // Get real elements
+              hsize_t start;
     constexpr hsize_t stride = 2;  //   (Complex array layout: { [re, im], [re, im], ... , [re, im] })
     constexpr hsize_t count  = N;
     constexpr hsize_t block  = 1;
 
+    start = 0;  // Get real elements
     assert(H5Sselect_hyperslab(memspace_id, H5S_SELECT_SET, &start, &stride, &count, &block) >= 0);
 
     assert(H5Dwrite(       re_wf_dset_id, H5T_NATIVE_DOUBLE, memspace_id, fspace_id, H5P_DEFAULT,   wf.data()) >= 0);
@@ -189,7 +187,7 @@ int main() {
     assert(H5Dclose(      re_Fwf_dset_id) >= 0);
     assert(H5Dclose(     re_iFwf_dset_id) >= 0);
 
-    start = 1;  // Imaginary elements
+    start = 1;  // Get imaginary elements
     assert(H5Sselect_hyperslab(memspace_id, H5S_SELECT_SET, &start, &stride, &count, &block) >= 0);
 
     assert(H5Dwrite(       im_wf_dset_id, H5T_NATIVE_DOUBLE, memspace_id, fspace_id, H5P_DEFAULT,   wf.data()) >= 0);
