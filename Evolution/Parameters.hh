@@ -28,14 +28,14 @@ constexpr inline double L = 1.;
 
 
 // Number of time steps
-constexpr inline size_t NT = 100;
+constexpr inline size_t NT = 200;
 
 // Time step
-constexpr inline double DT = 1.e-06;
+constexpr inline double DT = 1.e-04;
 
 
 // Initial wavefunction center
-constexpr inline double X0 = 0.1*L;
+constexpr inline double X0 = 0.4*L;
 
 // Initial wavefunction half-width
 constexpr inline double SIGMA = 0.03*L;
@@ -46,15 +46,16 @@ constexpr inline double PMAX_HALF = M_PI*HBAR*static_cast<double>(NX)/L;
 static_assert(PMAX_HALF > 0.);
 // ***********************
 
-// Initial wavefunction momentum
-constexpr inline double P0 = 0.05*PMAX_HALF;
+/* Initial wavefunction momentum
+ * NOTE: P0 > 0 makes the wave function move to the LEFT if V = 0               */
+constexpr inline double P0 = -0.005*PMAX_HALF;
 
 
 // ***** DON'T TOUCH *****
-constexpr inline int FREE_PROPAGATION = 0;
-constexpr inline int BARRIER_WELL     = 1;
-constexpr inline int STEP             = 2;
-constexpr inline int HARMONIC         = 3;
+#define FREE_PROPAGATION 0
+#define STEP             1
+#define BARRIER_WELL     2
+#define HARMONIC         3
 
 // Maximum allowed value for the potential
 constexpr inline double VMAX = 4.*M_PI*HBAR/DT;
@@ -62,7 +63,7 @@ static_assert(VMAX > 0.);
 // ***********************
 
 // Potential choice
-constexpr inline int POT = FREE_PROPAGATION;
+#define POT HARMONIC
 
 // Central value for the potential
 constexpr inline double VC = 0.5*L;
@@ -78,7 +79,7 @@ constexpr inline double K = 1.e+05;
 
 
 // Output frequency
-constexpr inline size_t OUT_EVERY = 5;
+constexpr inline size_t OUT_EVERY = 1;
 
 // Output filename
 #define FILENAME "Data.h5"

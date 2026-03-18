@@ -65,7 +65,7 @@ with h5py.File(filename, "r") as f:
     plt.close()
 
 
-    # Plot the DFT of wave function
+    # Plot the DFT of the wave function
     plt.figure()
     plt.xlabel("$p$", fontsize = 12.)
     plt.ylabel(r"$\operatorname{Re}\left[\hat{\psi}\right]\left(p\right)$", fontsize = 12.)

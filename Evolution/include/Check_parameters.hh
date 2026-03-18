@@ -16,7 +16,7 @@ static_assert(NT > 1);
 static_assert(DT > 0.);
 
 static_assert(SIGMA > 0.);
-static_assert(X0 - 3.*SIGMA > -L/2. and X0 + 3*SIGMA < L/2. - L/static_cast<double>(NX),
+static_assert(X0 - 3.*SIGMA > 0. and X0 + 3*SIGMA < L - L/static_cast<double>(NX),
               "Wave function is quite out of bounds");
 static_assert(P0 >= -PMAX_HALF and P0 <= PMAX_HALF - 2.*M_PI*HBAR/(1.*L));
 

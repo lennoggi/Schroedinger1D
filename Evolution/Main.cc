@@ -90,8 +90,6 @@ int main() {
     constexpr hsize_t tdims = NT/OUT_EVERY;  // NOTE: integer division
     array<double, tdims> time;
 
-
-
     /* ------------------------
      * Initialize the HDF5 file
      * ------------------------ */
@@ -119,19 +117,37 @@ int main() {
     assert(H5Sselect_hyperslab(memspace_im_id, H5S_SELECT_SET, &start, &stride, &count, &block) >= 0);
 
 
-    // ***** Position and momentum *****
-    const auto x_dset_id = H5Dcreate(file_id, "Position", H5T_NATIVE_DOUBLE, fspace_id,
+    // ***** Output frequency ****
+    constexpr hsize_t one   = 1;
+    const auto space_one_id = H5Screate_simple(1, &one, nullptr);
+    assert(space_one_id >= 0);
+
+    const auto out_freq_dset_id = H5Dcreate(file_id, "Output frequency", H5T_NATIVE_INT, space_one_id,
+                                            H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    assert(out_freq_dset_id >= 0);
+    assert(H5Dwrite(out_freq_dset_id, H5T_NATIVE_INT, space_one_id, space_one_id, H5P_DEFAULT, &OUT_EVERY) >= 0);
+    assert(H5Dclose(out_freq_dset_id) >= 0);
+    assert(H5Sclose(space_one_id) >= 0);
+
+
+    // ***** Position, momentum, and potential *****
+    const auto x_dset_id = H5Dcreate(file_id, "Position",  H5T_NATIVE_DOUBLE, fspace_id,
                                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    const auto p_dset_id = H5Dcreate(file_id, "Momentum", H5T_NATIVE_DOUBLE, fspace_id,
+    const auto p_dset_id = H5Dcreate(file_id, "Momentum",  H5T_NATIVE_DOUBLE, fspace_id,
+                                     H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    const auto V_dset_id = H5Dcreate(file_id, "Potential", H5T_NATIVE_DOUBLE, fspace_id,
                                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     assert(x_dset_id >= 0);
     assert(p_dset_id >= 0);
+    assert(V_dset_id >= 0);
 
     assert(H5Dwrite(x_dset_id, H5T_NATIVE_DOUBLE, fspace_id, fspace_id, H5P_DEFAULT, x.data()) >= 0);
     assert(H5Dwrite(p_dset_id, H5T_NATIVE_DOUBLE, fspace_id, fspace_id, H5P_DEFAULT, p.data()) >= 0);
+    assert(H5Dwrite(V_dset_id, H5T_NATIVE_DOUBLE, fspace_id, fspace_id, H5P_DEFAULT, V.data()) >= 0);
 
     assert(H5Dclose(x_dset_id) >= 0);
     assert(H5Dclose(p_dset_id) >= 0);
+    assert(H5Dclose(V_dset_id) >= 0);
 
 
     // **** Wave function and its direct and inverse Fourier transforms *****
@@ -175,6 +191,38 @@ int main() {
     array<complex<double>, NX> iFwf, iFwf1;
 
     for (auto n = decltype(NT){0}; n < NT; ++n) {
+        /* Write the wave function before updating it so that there's no delay
+         * between the wave function and the its inverse DFT
+         * NOTE: this implies that the very last update of the wave function is
+         *       never written to file. Not a big deal.                         */
+        static_assert(sizeof(std::size_t) <= sizeof(long long),
+                      "size_t too big for long long");
+        const auto [quot, rem] = lldiv(static_cast<long long>(n), static_cast<long long>(OUT_EVERY));
+
+        if (rem == 0) {
+            time[quot] = n*DT;
+
+            ostringstream iteration_ss;
+            iteration_ss << "Iteration " << n;
+
+            const auto re_wf_dset_id = H5Dcreate(re_wf_group_id, iteration_ss.str().c_str(),
+                                                 H5T_NATIVE_DOUBLE, fspace_id,
+                                                 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            const auto im_wf_dset_id = H5Dcreate(im_wf_group_id, iteration_ss.str().c_str(),
+                                                 H5T_NATIVE_DOUBLE, fspace_id,
+                                                 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            assert(re_wf_dset_id >= 0);
+            assert(im_wf_dset_id >= 0);
+
+            assert(H5Dwrite(re_wf_dset_id, H5T_NATIVE_DOUBLE, memspace_re_id, fspace_id, H5P_DEFAULT, wf.data()) >= 0);
+            assert(H5Dwrite(im_wf_dset_id, H5T_NATIVE_DOUBLE, memspace_im_id, fspace_id, H5P_DEFAULT, wf.data()) >= 0);
+
+            assert(H5Dclose(re_wf_dset_id) >= 0);
+            assert(H5Dclose(im_wf_dset_id) >= 0);
+        }
+
+
+        // Time evolution
         for (auto j = decltype(NX){0}; j < NX; ++j) {
             wf1[j] = cexp1[j]*wf[j];
         }
@@ -208,23 +256,11 @@ int main() {
         }
 
 
-        // Write data to file
-        static_assert(sizeof(std::size_t) <= sizeof(long long),
-                      "size_t too big for long long");
-        const auto [quot, rem] = lldiv(static_cast<long long>(n), static_cast<long long>(OUT_EVERY));
-
+        // Write the DFT and its inverse to file
         if (rem == 0) {
-            time[quot] = n*DT;
-
             ostringstream iteration_ss;
             iteration_ss << "Iteration " << n;
 
-            const auto   re_wf_dset_id = H5Dcreate(  re_wf_group_id, iteration_ss.str().c_str(),
-                                                   H5T_NATIVE_DOUBLE, fspace_id,
-                                                   H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            const auto   im_wf_dset_id = H5Dcreate(  im_wf_group_id, iteration_ss.str().c_str(),
-                                                   H5T_NATIVE_DOUBLE, fspace_id,
-                                                   H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             const auto  re_Fwf_dset_id = H5Dcreate( re_Fwf_group_id, iteration_ss.str().c_str(),
                                                    H5T_NATIVE_DOUBLE, fspace_id,
                                                    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -237,22 +273,16 @@ int main() {
             const auto im_iFwf_dset_id = H5Dcreate(im_iFwf_group_id, iteration_ss.str().c_str(),
                                                    H5T_NATIVE_DOUBLE, fspace_id,
                                                    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            assert(  re_wf_dset_id >= 0);
-            assert(  im_wf_dset_id >= 0);
             assert( re_Fwf_dset_id >= 0);
             assert( im_Fwf_dset_id >= 0);
             assert(re_iFwf_dset_id >= 0);
             assert(im_iFwf_dset_id >= 0);
 
-            assert(H5Dwrite(  re_wf_dset_id, H5T_NATIVE_DOUBLE, memspace_re_id, fspace_id, H5P_DEFAULT,   wf.data()) >= 0);
-            assert(H5Dwrite(  im_wf_dset_id, H5T_NATIVE_DOUBLE, memspace_im_id, fspace_id, H5P_DEFAULT,   wf.data()) >= 0);
             assert(H5Dwrite( re_Fwf_dset_id, H5T_NATIVE_DOUBLE, memspace_re_id, fspace_id, H5P_DEFAULT,  Fwf.data()) >= 0);
             assert(H5Dwrite( im_Fwf_dset_id, H5T_NATIVE_DOUBLE, memspace_im_id, fspace_id, H5P_DEFAULT,  Fwf.data()) >= 0);
             assert(H5Dwrite(re_iFwf_dset_id, H5T_NATIVE_DOUBLE, memspace_re_id, fspace_id, H5P_DEFAULT, iFwf.data()) >= 0);
             assert(H5Dwrite(im_iFwf_dset_id, H5T_NATIVE_DOUBLE, memspace_im_id, fspace_id, H5P_DEFAULT, iFwf.data()) >= 0);
 
-            assert(H5Dclose(  re_wf_dset_id) >= 0);
-            assert(H5Dclose(  im_wf_dset_id) >= 0);
             assert(H5Dclose( re_Fwf_dset_id) >= 0);
             assert(H5Dclose( im_Fwf_dset_id) >= 0);
             assert(H5Dclose(re_iFwf_dset_id) >= 0);
@@ -269,7 +299,7 @@ int main() {
     }
 
 
-    // Write the time to file 
+    // Write time to file 
     const auto tspace_id = H5Screate_simple(1, &tdims, nullptr);
     assert(tspace_id >= 0);
 
@@ -301,6 +331,8 @@ int main() {
     assert(H5Gclose(iFwf_group_id) >= 0);
 
     assert(H5Fclose(file_id) >= 0);
+
+    cout << "Data written to '" << FILENAME << "'" << endl;
 
     return 0;
 }
