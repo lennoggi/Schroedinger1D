@@ -1,6 +1,6 @@
 #include <cassert>
 #include <cmath>
-#include <array>
+#include <vector>
 #include <iostream>
 
 #include <hdf5.h>
@@ -31,24 +31,24 @@ int main() {
 
 
     // Build the initial wave function, potential, and helpers for the evolution
-    constexpr double      nhalf   = static_cast<double>(NX)/2.;
+    constexpr double      nhalf   = static_cast<double>(NX)/2.0;
     const complex<double> cexpfac = 2.0i*M_PI/static_cast<double>(NX);
 
     constexpr double dx = L/static_cast<double>(NX);
-    constexpr double dp = 2.*M_PI*HBAR/L; 
+    constexpr double dp = 2.0*M_PI*HBAR/L;
 
-    constexpr double dt_over_2hbar  = DT/(2.*HBAR);
+    constexpr double dt_over_2hbar  = DT/(2.0*HBAR);
     constexpr double dt_over_2hbarM = dt_over_2hbar/M;
 
-    constexpr double  Fwf_norm = dx/sqrt(2.*M_PI*HBAR);
-    constexpr double iFwf_norm = sqrt(2.*M_PI*HBAR)/L;
+    constexpr double  Fwf_norm = dx/sqrt(2.0*M_PI*HBAR);
+    constexpr double iFwf_norm = sqrt(2.0*M_PI*HBAR)/L;
 
-    array<double, NX> jj, x, V;
-    array<double, NX> ks, p;
+    vector<double> jj(NX), x(NX), V(NX);
+    vector<double> ks(NX), p(NX);
 
-    array<complex<double>, NX> wf;
-    array<complex<double>, NX>  cexp1, iFcexp1;
-    array<complex<double>, NX> Fcexp1;
+    vector<complex<double>>     wf(NX);
+    vector<complex<double>>  cexp1(NX), iFcexp1(NX);
+    vector<complex<double>> Fcexp1(NX);
 
 
     for (auto j = decltype(NX){0}; j < NX; ++j) {
@@ -64,7 +64,7 @@ int main() {
         #endif
 
         #if (POT == FREE_PROPAGATION)
-        V[j] = 0.;
+        V[j] = 0.0;
         #elif (POT == BARRIER_WELL)
         V[j] = barrier_well(x[j]);
         #elif (POT == STEP)
@@ -88,7 +88,7 @@ int main() {
 
 
     constexpr hsize_t tdims = NT/OUT_EVERY;  // NOTE: integer division
-    array<double, tdims> time;
+    vector<double> time(tdims);
 
     /* ------------------------
      * Initialize the HDF5 file
@@ -186,9 +186,9 @@ int main() {
      * Begin time evolution
      * ==================== */
     // NOTE: Fwf and iFwf are only used for output/diagnostics purposes
-    array<complex<double>, NX>         wf1;
-    array<complex<double>, NX>  Fwf,  Fwf1;
-    array<complex<double>, NX> iFwf, iFwf1;
+    vector<complex<double>>             wf1(NX);
+    vector<complex<double>>  Fwf(NX),  Fwf1(NX);
+    vector<complex<double>> iFwf(NX), iFwf1(NX);
 
     for (auto n = decltype(NT){0}; n < NT; ++n) {
         /* Write the wave function before updating it so that there's no delay
@@ -227,8 +227,8 @@ int main() {
             wf1[j] = cexp1[j]*wf[j];
         }
 
-        Fwf.fill(0.);
-        Fwf1.fill(0.);
+        fill(Fwf.begin(),  Fwf.end(),  0.0);
+        fill(Fwf1.begin(), Fwf1.end(), 0.0);
 
         for (auto k = decltype(NX){0}; k < NX; ++k) {
             for (auto j = decltype(NX){0}; j < NX; ++j) {
@@ -241,8 +241,8 @@ int main() {
             Fwf1[k] *= Fcexp1[k];
         }
 
-        iFwf.fill(0.);
-        iFwf1.fill(0.);
+        fill(iFwf.begin(),  iFwf.end(),  0.0);
+        fill(iFwf1.begin(), iFwf1.end(), 0.0);
 
         for (auto j = decltype(NX){0}; j < NX; ++j) {
             for (auto k = decltype(NX){0}; k < NX; ++k) {
