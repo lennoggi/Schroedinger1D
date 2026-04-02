@@ -14,24 +14,24 @@
 
 
 // Reduced Planck constant
-constexpr inline double HBAR = 1.;
+constexpr inline double HBAR = 1.0;
 
 // Mass of the particle
-constexpr inline double M = 1.;
+constexpr inline double M = 1.0;
 
 
 // Number of spatial grid points
 constexpr inline size_t NX = 1000;
 
 // Spatial bounds are [0, L - L/N]
-constexpr inline double L = 1.;
+constexpr inline double L = 1.0;
 
 
 // Number of time steps
 constexpr inline size_t NT = 100;
 
 // Time step
-constexpr inline double DT = 1.e-05;
+constexpr inline double DT = 1.0e-05;
 
 
 // Initial wavefunction center
@@ -43,7 +43,7 @@ constexpr inline double SIGMA = 0.03*L;
 // ***** DON'T TOUCH *****
 // Half the maximum momentum of the wave function
 constexpr inline double PMAX_HALF = M_PI*HBAR*static_cast<double>(NX)/L;
-static_assert(PMAX_HALF > 0.);
+static_assert(PMAX_HALF > 0.0);
 // ***********************
 
 /* Initial wavefunction momentum
@@ -58,8 +58,8 @@ constexpr inline double P0 = -0.24*PMAX_HALF;
 #define HARMONIC         3
 
 // Maximum allowed value for the potential
-constexpr inline double VMAX = 4.*M_PI*HBAR/DT;
-static_assert(VMAX > 0.);
+constexpr inline double VMAX = 4.0*M_PI*HBAR/DT;
+static_assert(VMAX > 0.0);
 // ***********************
 
 // Potential choice
@@ -75,7 +75,7 @@ constexpr inline double VH = 0.1*VMAX;
 constexpr inline double VW = 0.1*L;
 
 // Strength of the harmonic potential
-constexpr inline double K = 1.e+05;
+constexpr inline double K = 1.0e+05;
 
 
 // Output frequency
