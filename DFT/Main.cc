@@ -1,5 +1,5 @@
 #include <cassert>
-#include <array>
+#include <vector>
 #include <complex>
 #include <iostream>
 
@@ -35,11 +35,11 @@ int main() {
 
 
     // Build the wave function
-    constexpr double dx = L/static_cast<double>(N);
-    array<double, N> jj, x;
-    array<complex<double>, N> wf;
+    constexpr double dx = L/static_cast<double>(NX);
+    vector<double>          jj(NX), x(NX);
+    vector<complex<double>> wf(NX);
 
-    for (auto j = decltype(N){0}; j < N; ++j) {
+    for (auto j = decltype(NX){0}; j < NX; ++j) {
         jj[j] = static_cast<double>(j);
          x[j] = j*dx;  // NOTE: only used for output
 
@@ -56,19 +56,19 @@ int main() {
     /* ---------------------------------------------------------
      * Build the discrete Fourier transform of the wave function
      * --------------------------------------------------------- */
-    constexpr double      nhalf    = static_cast<double>(N)/2.;
-    const complex<double> cexpfac  = 2.0i*M_PI/static_cast<double>(N);
-    constexpr double      Fwf_norm = dx/sqrt(2.*M_PI*HBAR);
-    constexpr double      dp       = 2.*M_PI*HBAR/L; 
+    constexpr double      nhalf    = static_cast<double>(NX)/2.0;
+    const complex<double> cexpfac  = 2.0i*M_PI/static_cast<double>(NX);
+    constexpr double      Fwf_norm = dx/sqrt(2.0*M_PI*HBAR);
+    constexpr double      dp       = 2.0*M_PI*HBAR/L;
 
-    array<double, N> ks, p;
-    array<complex<double>, N> Fwf{0.}, Fwf_exact;
+    vector<double>          ks(NX), p(NX);
+    vector<complex<double>> Fwf(NX, 0.0), Fwf_exact(NX);
 
-    for (auto k = decltype(N){0}; k < N; ++k) {
+    for (auto k = decltype(NX){0}; k < NX; ++k) {
         ks[k]  = static_cast<double>(k) - nhalf;
          p[k]  = ks[k]*dp;  // NOTE: only used for output
 
-        for (auto j = decltype(N){0}; j < N; ++j) {
+        for (auto j = decltype(NX){0}; j < NX; ++j) {
             Fwf[k] += exp(-cexpfac*jj[j]*ks[k])*wf[j];
         }
 
@@ -88,10 +88,10 @@ int main() {
      * Build the inverse discrete Fourier transform of the wave function
      * ----------------------------------------------------------------- */
     constexpr double iFwf_norm = sqrt(2.*M_PI*HBAR)/L;
-    array<complex<double>, N> iFwf{0.};
+    vector<complex<double>> iFwf(NX, 0.0);
 
-    for (auto j = decltype(N){0}; j < N; ++j) {
-        for (auto k = decltype(N){0}; k < N; ++k) {
+    for (auto j = decltype(NX){0}; j < NX; ++j) {
+        for (auto k = decltype(NX){0}; k < NX; ++k) {
             iFwf[j] += exp(cexpfac*jj[j]*ks[k])*Fwf[k];
         }
 
@@ -106,7 +106,7 @@ int main() {
     const auto file_id = H5Fcreate(FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     assert(file_id >= 0);
 
-    constexpr hsize_t fdims = N;
+    constexpr hsize_t fdims = NX;
     const auto fspace_id    = H5Screate_simple(1, &fdims, nullptr);
     assert(fspace_id >= 0);
 
@@ -165,13 +165,13 @@ int main() {
     assert(     re_iFwf_dset_id >= 0);
     assert(     im_iFwf_dset_id >= 0);
 
-    constexpr hsize_t memdims = 2*N;
+    constexpr hsize_t memdims = 2*NX;
     const auto memspace_id    = H5Screate_simple(1, &memdims, nullptr);
     assert(memspace_id >= 0);
 
               hsize_t start;
     constexpr hsize_t stride = 2;  //   (Complex array layout: { [re, im], [re, im], ... , [re, im] })
-    constexpr hsize_t count  = N;
+    constexpr hsize_t count  = NX;
     constexpr hsize_t block  = 1;
 
     start = 0;  // Get real elements

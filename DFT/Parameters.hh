@@ -3,6 +3,7 @@
 
 #include <cmath>
 
+
 // ***** DON'T TOUCH *****
 #define GAUSSIAN 0
 #define BOX      1
@@ -12,16 +13,16 @@
 #define WF BOX
 
 // Reduced Planck constant
-constexpr inline double HBAR = 1.;
+constexpr inline double HBAR = 1.0;
 
 // Number of spatial grid points
-constexpr inline size_t N = 1000;
+constexpr inline size_t NX = 1000;
 
 // Spatial bounds are [0, L - L/N]
-constexpr inline double L = 1.;
+constexpr inline double L = 1.0;
 
 // Half the maximum momentum of the wave function
-constexpr inline double PMAX_HALF = M_PI*HBAR*static_cast<double>(N)/L;
+constexpr inline double PMAX_HALF = M_PI*HBAR*static_cast<double>(NX)/L;
 
 // Initial wavefunction center
 constexpr inline double X0 = 0.1*L;
@@ -34,5 +35,6 @@ constexpr inline double P0 = 0.05*PMAX_HALF;
 
 // Output filename
 #define FILENAME "Data.h5"
+
 
 #endif  // PARAMETERS_HH
